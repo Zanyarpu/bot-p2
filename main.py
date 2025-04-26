@@ -1,27 +1,33 @@
 import telebot
 import logging
 from listes import *
+from Buttons import *
 from os import environ
 from time import sleep
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup,ReplyKeyboardRemove
 
+# API Token:
 API_TOKEN = environ.get("API_TOKEN")
 bot = telebot.TeleBot(API_TOKEN, threaded= True)
 
+# Output logger:
 logger = telebot.logger
 logger.setLevel(logging.INFO)
 
-# Buttons Text:
+# Buttons Message:
 menu_back_MSG_TEXT = "بازگـــشت بــــه منــــوی اصـــــلی 👇🏻"
 return_back_MSG_TEXT = "بازگـــشت بــــه مرحلــــه قبلــــی 👇🏻"
 both_back_MSG_TEXT = "بازگشت به مرحلـه قبلـی یا منـوی اصلـی 👇🏻"
 
+# Buttons Text:
 menu_back_BTN_TEXT = "منـــوی اصـــلی  ↪️"
 return_back_BTN_TEXT = "مرحلـــه قبلـــی  ➡️"
-
 Return_BTN_LIST = [return_back_BTN_TEXT, menu_back_BTN_TEXT]
 
-#*******************************************************************************
+
+
+
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
 # Main Menu Sections:
 
 def get_section(message, section_list):
@@ -30,7 +36,7 @@ def get_section(message, section_list):
 
     if section == section_list[0]: Class_list(message, 0)
 
-    elif section == section_list[1]: Class_docs(message, 1)
+    elif section == section_list[1]: docs_list(message, 1)
 
     elif section == section_list[2]: Systems_web(message)
 
@@ -46,22 +52,15 @@ def get_section(message, section_list):
 
     elif section == section_list[8]: Support_id(message)
 
-def get_return(message, Field_index, section_index): # back_step
-    if message.text == Return_BTN_LIST[1]:
-        logger.info("triggred menu: OK ...")
-        send_welcome(message)
 
-    if message.text == Return_BTN_LIST[0]:
-        send_Semester(message, Field_index, section_index)
-
-#*******************************************************************************
-# Main Def:
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Main Defs:
 
 def Class_list(message, sec_indx):
     logger.info("triggred 2: OK ...")
     send_Field(message, sec_indx)
 
-def Class_docs(message, sec_indx):
+def docs_list(message, sec_indx):
     logger.info("triggred 2: OK ...")
     send_Field(message, sec_indx)
 
@@ -94,9 +93,44 @@ def Support_id(message):
     send_support_id(message, 0)
 
 
-#*******************************************************************************
-# Define Defs:
 
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Define return Defs:
+
+def return_check(message, back_step, Field_index, section_index):
+    # Check Return BTN (Back Step):
+    if message.text == Return_BTN_LIST[0]:
+        return_back(message, back_step, Field_index, section_index)
+    # Check Return BTN (Menu Back):
+    elif message.text == Return_BTN_LIST[1]: 
+        return_menu(message)
+
+
+def return_menu(message):
+    logger.info("triggred menu: OK ...")
+    send_menu(message)
+
+
+def return_back(message, back_step, Field_index, section_index):
+    logger.info("triggred back: OK ...")
+    if back_step == -1: send_Field(message, section_index)
+    elif back_step == -2: send_search_type(message, Field_index, section_index)
+    elif back_step == -3: send_Semester(message, Field_index, section_index)
+
+
+
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Define send Defs:
+
+def send_menu(message):
+    menu_text = """در چه زمینه ای می تونم کمک تون کنم ؟ 😊👇🏻"""
+
+    markup, section_list = send_welcome_BTN()
+    bot.send_message(message.chat.id, menu_text, reply_markup = markup)
+    bot.register_next_step_handler(message, get_section, section_list)
+
+
+#-------------------------------------------------------------------
 def send_Field(message, section_index):
     logger.info("triggred 3: OK ...")
 
@@ -106,25 +140,9 @@ def send_Field(message, section_index):
     🌟  بسیار خب! چه رشته ای هستی؟""",
     reply_markup = markup )
 
-    bot.register_next_step_handler(message, get_Field, Field_list, section_index)
+    bot.register_next_step_handler(message,
+    get_Field, Field_list, section_index)
 
-
-def get_Field(message, Field_list, section_index):
-    logger.info("triggred 4: OK ...")
-
-    Field_index = 0
-    Field = message.text
-
-    if section_index == 6:
-        no_list_MasId(message, section_index)
-
-    else:
-        if Field in Field_list:
-            Field_index = (Field_list.index(Field))
-        send_search_type(message, Field_index, section_index)
-    
-    if message.text == Field_list[3]: send_welcome(message)
-        
 
 #-------------------------------------------------------------------
 def send_search_type(message, Field_index, section_index):
@@ -136,55 +154,9 @@ def send_search_type(message, Field_index, section_index):
     🌟  لطفا روش جستجو را انتخاب کنید: 👇🏻""",
     reply_markup = markup )
 
-    # bot.register_next_step_handler(message, get_search_type, type_list, Field_index, section_index)
-    bot.register_next_step_handler(message, no_list_Class, Field_index, section_index)
-
-
-def get_search_type(message, type_list, Field_index, section_index):
-    logger.info("triggred 6: OK ...")
-
-    search_type = message.text
-    if search_type == type_list[0]:
-        send_Semester(message, Field_index, section_index)
-
-    elif search_type == type_list[1]:
-        send_all(message, Field_index, section_index)
-
-    elif message.text == type_list[2]:
-        send_Field(message, section_index)
-
-    elif message.text == type_list[3]:
-        send_welcome(message)
-
-
-def send_all(message, Field_index, section_index):
-    logger.info("triggred 7: OK ...")
-
-    no_list_Class()
-
-    # if Field_index == 0:
-    #     if section_index == 0:
-    #         M_class_all(message)
-    #     elif section_index == 1:
-    #         M_docs_all(message)
-    #     elif section_index == 6:
-    #         M_master_all(message)
-
-    # elif Field_index == 1:
-    #     if section_index == 0:
-    #         K_class_all(message)
-    #     elif section_index == 1:
-    #         K_docs_all(message)
-    #     elif section_index == 6:
-    #         K_master_all(message)
-
-    # elif Field_index == 2:
-    #     if section_index == 0:
-    #         I_class_all(message)
-    #     elif section_index == 1:
-    #         I_docs_all(message)
-    #     elif section_index == 6:
-    #         I_master_all(message)
+    bot.register_next_step_handler(message,
+    get_search_type, type_list, Field_index, section_index)
+    
 
 #-------------------------------------------------------------------
 def send_Semester(message, Field_index, section_index):
@@ -196,126 +168,68 @@ def send_Semester(message, Field_index, section_index):
     "🌟  خیلی عالی! ترم چندی؟", 
     reply_markup = markup )
 
-    # Fields:
+    # Check Fields (Mechanic):
     if Field_index == 0:
-        bot.register_next_step_handler(message, M_get_Semester, semester_list, Field_index, section_index)
+        bot.register_next_step_handler(message,
+        M_get_Semester, semester_list, Field_index, section_index)
+
+    # Check Fields (Computer):
     elif Field_index == 1:
-        bot.register_next_step_handler(message, K_get_Semester, semester_list, Field_index, section_index)
+        bot.register_next_step_handler(message,
+        K_get_Semester, semester_list, Field_index, section_index)
+    
+    # Check Fields (Industries):
     elif Field_index == 2:
-        bot.register_next_step_handler(message, I_get_Semester, semester_list, Field_index, section_index)
+        bot.register_next_step_handler(message,
+        I_get_Semester,semester_list, Field_index, section_index)
 
 
-def M_get_Semester(message, semester_list, Field_index, section_index):
-    logger.info("triggred 8: OK ...")
-
-    def_Class_list = [M_class1, M_class2, M_class3, M_class4,
-                      M_class5, M_class6, M_class7, M_class8]
-
-    def_Docs_list = [M_docs1, M_docs2, M_docs3, M_docs4,
-                     M_docs5, M_docs6, M_docs7, M_docs8]
-
-    # def_MasID_list = [M_masid1, M_masid2, M_masid3, M_masid4, 
-    #                   M_masid5, M_masid6, M_masid7, M_masid8]
-    def_list = []
-    list_index = 0
-    semester = message.text
-    
-    # Control:
-    if message.text == semester_list[8]:
-        send_search_type(message, Field_index, section_index)
-    elif message.text == semester_list[9]:
-        send_welcome(message)
-
-    # Type ask:
-    if section_index == 0:
-        def_list = def_Class_list
-    elif section_index == 1:
-        def_list = def_Docs_list
-    # elif section_index == 6:
-    #     def_list = def_MasID_list
-
-    class_to_fun = {i+1: func for i, func in enumerate(def_list)}
-    if semester in semester_list: list_index = (semester_list.index(semester)) + 1
-    action = class_to_fun[list_index](message)
-
-    if action == -1:
-        send_Semester(message, Field_index, section_index)
-    elif action == -2:
-        send_welcome(message)
-
-    
-
-
-def K_get_Semester(message, semester_list, Field_index, section_index):
+#-------------------------------------------------------------------
+def send_all(message, Field_index, section_index):
     logger.info("triggred 7: OK ...")
 
-    def_Class_list = [K_class1, K_class2, K_class3, K_class4, 
-                      K_class5, K_class6, K_class7, K_class8]
+    no_list(message, -2, Field_index, section_index)
+    pass
 
-    def_Docs_list = [K_docs1, K_docs2, K_docs3, K_docs4,
-                     K_docs5, K_docs6, K_docs7, K_docs8]
+    # logger.info("triggred 11: OK ...")
+    # # Check Section Index (For Class): 
+    # if section_index == 0:
+    #     # Mechanic Classes:
+    #     if Field_index == 0:
+    #         inline_markup_Class = M_all_class_BTN(message)
+    #     # Computer Classes:
+    #     elif Field_index == 1:
+    #         inline_markup_Class = K_all_class_BTN(message)
+    #     # Industries Classes:
+    #     elif Field_index == 2:
+    #         inline_markup_Class = I_all_class_BTN(message)
 
-    # def_MasID_list = [K_masid1, K_masid2, K_masid3, K_masid4,
-    #                   K_masid5, K_masid6, K_masid7, K_masid8]
-    def_list = []
-    list_index = 0
-    semester = message.text
+    #     bot.send_message(message.chat.id,
+    #     "لیست کلاس های موجود  🔽",
+    #     reply_markup = inline_markup_Class)
 
-    # Control:
-    if message.text == semester_list[8]:
-        send_search_type(message, Field_index, section_index)
-    elif message.text == semester_list[9]:
-        send_welcome(message)
+    # # Check Section Index (For Docs): 
+    # if section_index == 1:
+    #     # Mechanic Docs:
+    #     if Field_index == 0:
+    #         inline_markup_Docs = M_all_Docs_BTN(message)
+    #     # Computer Docs:
+    #     elif Field_index == 1:
+    #         inline_markup_Docs = K_all_Docs_BTN(message)
+    #     # Industries Docs:
+    #     elif Field_index == 2:
+    #         inline_markup_Docs = I_all_Docs_BTN(message)
 
-    # Type ask:
-    if section_index == 0:
-        def_list = def_Class_list
-    elif section_index == 1:
-        def_list = def_Docs_list
-    # elif section_index == 6:
-    #     def_list = def_MasID_list
+    #     bot.send_message(message.chat.id,
+    #     "لیست دروس موجود  🔽",
+    #     reply_markup = inline_markup_Docs)
 
-    class_to_fun = {i+1: func for i, func in enumerate(def_list)}
-    if semester in semester_list: list_index = (semester_list.index(semester)) + 1
-    action = class_to_fun[list_index](message, Field_index, section_index)
+        
+    # bot.send_message(message.chat.id,
+    # both_back_MSG_TEXT,
+    # reply_markup = both_back_BTN())
 
-    if action == -1:
-        send_Semester(message, Field_index, section_index)
-
-
-def I_get_Semester(message, semester_list, Field_index, section_index):
-    logger.info("triggred 7: OK ...")
-
-    def_Class_list = [I_clas41, I_class2, I_class3, I_class4,
-                      I_class5, I_class6, I_class7, I_class8]
-
-    def_Docs_list = [I_docs1, I_docs2, I_docs3, I_docs4,
-                     I_docs5, I_docs6, I_docs7, I_docs8]
-
-    # def_MasID_list = [I_masid1, I_masid2, I_masid3, I_masid4,
-    #                   I_masid5, I_masid6, I_masid7, I_masid8]
-    def_list = []
-    list_index = 0
-    semester = message.text
-
-    # Control:
-    if message.text == semester_list[8]:
-        send_search_type(message, Field_index, section_index)
-    elif message.text == semester_list[9]:
-        send_welcome(message)
-
-    # Type ask:
-    if section_index == 0:
-        def_list = def_Class_list
-    elif section_index == 1:
-        def_list = def_Docs_list
-    # elif section_index == 6:
-    #     def_list = def_MasID_list
-
-    class_to_fun = {i+1: globals()[func] for i, func in enumerate(def_list)}
-    if semester in semester_list: list_index = (semester_list.index(semester)) + 1
-    class_to_fun[list_index](message)
-
+    # bot.register_next_step_handler(message, return_check, -1, None, None)
 
 #-------------------------------------------------------------------
 def send_webs(message):
@@ -330,6 +244,8 @@ def send_webs(message):
     bot.send_message(message.chat.id,
     menu_back_MSG_TEXT,
     reply_markup = menu_back_BTN())
+
+    bot.register_next_step_handler(message, return_check, None, None, None)
 
 
 #-------------------------------------------------------------------
@@ -346,6 +262,8 @@ def send_orgs(message):
     menu_back_MSG_TEXT,
     reply_markup = menu_back_BTN())
 
+    bot.register_next_step_handler(message, return_check, None, None, None)
+
 
 #-------------------------------------------------------------------
 def send_stud_forms(message):
@@ -359,6 +277,8 @@ def send_stud_forms(message):
     bot.send_message(message.chat.id,
     menu_back_MSG_TEXT,
     reply_markup = menu_back_BTN())
+
+    bot.register_next_step_handler(message, return_check, None, None, None)
 
 
 #-------------------------------------------------------------------
@@ -374,6 +294,8 @@ def send_educat_files(message):
     menu_back_MSG_TEXT,
     reply_markup = menu_back_BTN())
 
+    bot.register_next_step_handler(message, return_check, None, None, None)
+
 
 #-------------------------------------------------------------------
 def send_support_id(message, send_it):
@@ -383,24 +305,13 @@ def send_support_id(message, send_it):
 
     if send_it == 0:
         bot.send_message(message.chat.id,"""
-        🌟  لطفا گزینه موردنظرت رو انتخاب کن 👇🏻""",
+        🌟  اگر پیشنهادی دارید یا به خطایی برخوردید خوشحال می شیم با ما در میان بزارید 👇🏻""",
         reply_markup = markup)
         
-    bot.register_next_step_handler(message, get_support_id, support_list)
+    bot.register_next_step_handler(message,
+    get_support_id, support_list)
 
-
-def get_support_id(message, support_list): #support_list
-    logger.info("triggred 4: OK ...")
     
-    if message.text == support_list[2]:
-        send_welcome(message)
-    else:
-        bot.send_message(message.chat.id,"""
-        🌟  لطفا نظر خود را با ما در میان بزارید👇🏻""",
-        reply_markup = get_support_id_BTN(message.text, support_list))
-        send_support_id(message, -1)
-
-
 #-------------------------------------------------------------------
 def send_faculty_call(message):
 
@@ -410,9 +321,180 @@ def send_faculty_call(message):
     menu_back_MSG_TEXT,
     reply_markup = menu_back_BTN())
 
+    bot.register_next_step_handler(message, return_check, None, None, None)
 
-#*******************************************************************************
 
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Define  no list  Defs:
+
+def no_list(message, back_step, Field_index, section_index):
+    logger.info("triggred no_list: OK ...")
+    # logger.info("back_step :", back_step)
+
+    bot.send_message(message.chat.id,
+    "هنوز لیستی وارد نشده",
+    reply_markup = both_back_BTN())
+
+    if back_step == -1:
+        bot.register_next_step_handler(message, return_check, back_step, None, section_index)
+
+    elif back_step == -2:
+        bot.register_next_step_handler(message, return_check, back_step, Field_index, section_index)
+
+
+
+
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Define  next_step_handeler  Defs:
+
+def get_Field(message, Field_list, section_index):
+    logger.info("triggred 4: OK ...")
+
+    Field_index = 0
+    Field = message.text
+
+    if Field in Field_list:
+
+        # Check Section Index (For Mass_Id):
+        if section_index == 6:
+            no_list(message, -1, None, section_index)
+        # Check Section Index (For Class and Docs):
+        elif section_index == 0 or 1:
+            Field_index = (Field_list.index(Field))
+            send_search_type(message, Field_index, section_index)
+    
+    # Check Return Btn:
+    else: return_check(message, None, None, None)
+
+
+#-------------------------------------------------------------------
+def get_search_type(message, type_list, Field_index, section_index):
+    logger.info("triggred 6: OK ...")
+
+    search_type = message.text
+
+    # Check search type (For all):
+    if search_type == type_list[0]:
+        send_all(message, Field_index, section_index)
+
+    # Check search type (By Semesters):
+    elif search_type == type_list[1]:
+        send_Semester(message, Field_index, section_index)
+
+    # Check Return Btn:
+    else: return_check(message, -1, None, section_index)
+
+
+#-------------------------------------------------------------------
+def M_get_Semester(message, semester_list, Field_index, section_index):
+    logger.info("triggred 8: OK ...")
+
+    def_Class_list = [M_class1, M_class2, M_class3, M_class4,
+                      M_class5, M_class6, M_class7, M_class8]
+
+    def_Docs_list = [M_docs1, M_docs2, M_docs3, M_docs4,
+                     M_docs5, M_docs6, M_docs7, M_docs8]
+
+    def_list = []
+    semester_index = 0
+    semester = message.text
+    
+    # Control:
+    if semester in semester_list:
+        # Check Section (For Class):
+        if section_index == 0:
+            def_list = def_Class_list
+        # Check Section (For Docs):
+        elif section_index == 1:
+            def_list = def_Docs_list
+
+        class_to_fun = {i+1: func for i, func in enumerate(def_list)}
+        semester_index = (semester_list.index(semester)) + 1
+        class_to_fun[semester_index](message)
+
+    # Check Return Btn:
+    else: return_check(message, -2, Field_index, section_index)
+
+    
+    #-------------------------------------------------------------------
+def K_get_Semester(message, semester_list, Field_index, section_index):
+    logger.info("triggred 8: OK ...")
+
+    def_Class_list = [K_class1, K_class2, K_class3, K_class4, 
+                      K_class5, K_class6, K_class7, K_class8]
+
+    def_Docs_list = [K_docs1, K_docs2, K_docs3, K_docs4,
+                     K_docs5, K_docs6, K_docs7, K_docs8]
+
+    def_list = []
+    list_index = 0
+    semester = message.text
+
+    if semester in semester_list:
+        # Check Section (For Class):
+        if section_index == 0:
+            def_list = def_Class_list
+        # Check Section (For Docs):
+        elif section_index == 1:
+            def_list = def_Docs_list
+
+        class_to_fun = {i+1: func for i, func in enumerate(def_list)}
+        list_index = (semester_list.index(semester)) + 1
+        class_to_fun[list_index](message, Field_index, section_index)
+
+    # Check Return Btn:
+    else: return_check(message, -2, Field_index, section_index)
+
+#-------------------------------------------------------------------
+def I_get_Semester(message, semester_list, Field_index, section_index):
+    logger.info("triggred 8: OK ...")
+
+    def_Class_list = [I_class1, I_class2, I_class3, I_class4,
+                      I_class5, I_class6, I_class7, I_class8]
+
+    def_Docs_list = [I_docs1, I_docs2, I_docs3, I_docs4,
+                     I_docs5, I_docs6, I_docs7, I_docs8]
+
+    def_list = []
+    list_index = 0
+    semester = message.text
+
+    if semester in semester_list:
+        # Check Section (For Class):
+        if section_index == 0:
+            def_list = def_Class_list
+        # Check Section (For Docs):
+        elif section_index == 1:
+            def_list = def_Docs_list
+
+        class_to_fun = {i+1: globals()[func] for i, func in enumerate(def_list)}
+        list_index = (semester_list.index(semester)) + 1
+        class_to_fun[list_index](message)
+
+    # Check Return Btn:
+    else: return_check(message, -2, Field_index, section_index)
+
+
+#-------------------------------------------------------------------
+def get_support_id(message, support_list): #support_list
+    logger.info("triggred 4: OK ...")
+    
+    support = message.text
+
+    if support in support_list:
+        bot.send_message(message.chat.id,"""
+        🌟  لطفا نظر خود را با ما در میان بزارید👇🏻""",
+        reply_markup = get_support_id_BTN(message.text, support_list))
+        send_support_id(message, -1)
+
+    else:
+        return_check(message, None, None, None)
+
+
+
+
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Define Kmputer Docs Defs:
 
 def K_docs1(message, Field_index, section_index):
     # inline_markup = K_docs6_BTN()
@@ -426,7 +508,7 @@ def K_docs1(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
 def K_docs2(message, Field_index, section_index):
@@ -441,7 +523,7 @@ def K_docs2(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
 def K_docs3(message, Field_index, section_index):
@@ -456,7 +538,7 @@ def K_docs3(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
 def K_docs4(message, Field_index, section_index):
@@ -471,7 +553,7 @@ def K_docs4(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
 def K_docs5(message, Field_index, section_index):
@@ -486,7 +568,7 @@ def K_docs5(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
 def K_docs6(message, Field_index, section_index):
@@ -500,7 +582,7 @@ def K_docs6(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
 def K_docs7(message, Field_index, section_index):
@@ -515,7 +597,7 @@ def K_docs7(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
     
 
 def K_docs8(message, Field_index, section_index):
@@ -530,437 +612,127 @@ def K_docs8(message, Field_index, section_index):
     both_back_MSG_TEXT,
     reply_markup = both_back_BTN())
     
-    bot.register_next_step_handler(message, get_return, Field_index, section_index)
+    bot.register_next_step_handler(message, return_check, -3, Field_index, section_index)
 
 
-#*******************************************************************************
-def no_list_MasId(message, section_index):
-    logger.info("triggred 77777: OK ...")
 
-    if message.text == Return_BTN_LIST[0]:
-        logger.info("triggred 8888: OK ...")
-        send_welcome(message)
 
-    elif message.text == Return_BTN_LIST[1]:
-        send_Field(message, section_index)
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+# Define  Main handlers  Decorators:
 
-    bot.send_message(message.chat.id,
-    "هنوز لیستی وارد نشده",
-    reply_markup = both_back_BTN())
-
-
-#-------------------------------------------------------------------
-def no_list_Class(message, Field_index, section_index):
-    
-    logger.info("triggred 77777: OK ...")
-
-    if message.text == Return_BTN_LIST[0]:
-        logger.info("triggred 8888: OK ...")
-        send_search_type(message, Field_index, section_index)
-
-    elif message.text == Return_BTN_LIST[1]:
-        send_welcome(message)
-
-    bot.send_message(message.chat.id,
-    "هنوز لیستی وارد نشده",
-    reply_markup = both_back_BTN())
-    
-
-
-
-#*******************************************************************************
-# Buttons:
-
-def menu_back_BTN():
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(KeyboardButton(menu_back_BTN_TEXT))
-    return markup
-
-def return_back_BTN():
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(KeyboardButton(return_back_BTN_TEXT))
-    return markup
-
-def both_back_BTN():
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    for return_btn in range(2):
-        markup.add(KeyboardButton(Return_BTN_LIST[return_btn]))
-    return markup
-
-
-#-------------------------------------------------------------------
-def send_welcome_BTN():
-
-    section_list = [
-        "کلاس های درسی",
-        "جزوه های درسی",
-        "سامانه های دانشجویی",
-        "تشکل های دانشجویی",
-        "فرم های دانشجویی",
-        "فایل های آمورشی",
-        "ارتباط با اساتید",
-        "تماس با واحدهای دانشکده",
-        "ارتباط با پشتیبانی"
-    ]
-
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    for sl in range(0, 7, 2):
-        markup.add(KeyboardButton(section_list[sl+1]), KeyboardButton(section_list[sl]))
-    markup.add(KeyboardButton(section_list[8]))
-
-    return markup, section_list
-
-
-#-------------------------------------------------------------------
-def send_Field_BTN():
-
-    Field_list = [
-        'مکانیک 👨🏻‍🔧','کامپیوتر 👨🏻‍💻', 'صنایع 👷🏻‍♂️',
-        menu_back_BTN_TEXT
-    ]
-
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    for sl in range(3):
-        markup.add(KeyboardButton(Field_list[sl]))
-    markup.add(KeyboardButton(Field_list[3]))
-
-    return markup, Field_list
-
-
-#-------------------------------------------------------------------
-def send_search_type_BTN(section_index):
-
-    type_class_list = [
-        'جستجـــوی هـمـــــــــه کلاس ها 🔠',
-        'جستجوی کلاس ها بر اساس ترم 🔢',
-        return_back_BTN_TEXT, menu_back_BTN_TEXT
-    ]
-    type_docs_list = [
-        'جستجـــوی هـمـــــــــه جزوه ها 🔠',
-        'جستجوی جزوه ها بر اساس ترم 🔢',
-        return_back_BTN_TEXT, menu_back_BTN_TEXT
-    ]
-
-
-    type_list = []
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-
-    if section_index == 0:
-        for st in range(4):
-            markup.add(KeyboardButton(type_class_list[st]))
-            type_list = type_class_list
-
-    elif section_index == 1:
-        for st in range(4):
-            markup.add(KeyboardButton(type_docs_list[st]))
-            type_list = type_docs_list
-    
-    return markup, type_list
-
-
-#-------------------------------------------------------------------
-def send_Semester_BTN():
-
-    semester_list = [
-        'تــرم  1⃣', 'تــرم  2⃣',
-        'تــرم  3⃣', 'تــرم  4⃣',
-        'تــرم  5⃣','تــرم  6⃣',
-        'تــرم  7⃣', 'تــرم  8⃣',
-        return_back_BTN_TEXT, menu_back_BTN_TEXT
-    ]
-
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    for sl in range(0, 7, 2):
-        markup.add(KeyboardButton(semester_list[sl+1]), 
-                   KeyboardButton(semester_list[sl]))
-    markup.add(KeyboardButton(semester_list[8]))
-    markup.add(KeyboardButton(semester_list[9]))
-
-    return markup, semester_list
-
-#-------------------------------------------------------------------
-def send_webs_BTN():
-
-    web_name = [
-        'سایت دانشکده 🌐',
-        'سایت کتابخانه 📚' ,
-        'سامانه سمــاد 🍔',
-        'سمــــــــاد اپ ✅',
-        'سامانه نــــــاد 📝',
-        'صندوق رفاه دانشجویان 📥'
-    ]
-    
-    web_url = [
-        "https://miyanehtech.tabrizu.ac.ir/fa",
-        "https://google.com",
-        "https://samad-mi.tabrizu.ac.ir/index/index.rose",
-        "https://samad.app",
-        "http://46.209.208.110:7010/Student/Pages/acmstd/loginPage.jsp",
-        "https://refah.swf.ir/Account/Login/?ReturnUrl=%2F"
-    ]
-
-    inline_markup = InlineKeyboardMarkup()
-    for sw in range(6):
-        inline_markup.add(InlineKeyboardButton(text= web_name[sw], url= web_url[sw]))
-
-    return inline_markup
-
-
-#-------------------------------------------------------------------
-def send_orgs_BTN():
-
-    org_name = [
-        'شـــورای صنفــــــــی دانشکده  ⭕️',
-        'انجمن علمی مهندسی مکـانـیک  ⭕️',
-        'انجمن علمی مهندسی کامپیوتر  ⭕️',
-        'انجمن علمی مهندسی صنــــایع  ⭕️',
-        'بسیــــــج دانشجویی دانشکده  ⭕️',
-        'نشـریـــــــه های دانــــشجویی  ⭕️'
-    ]
-    
-    org_url = [
-        "https://t.me/senfimiyane",
-        "https://t.me/MECH_MSME",
-        "https://t.me/Computer_SCM",
-        "https://ssss.ss",
-        "https://t.me/basij_mianeh",
-        "https://ssss.ss"
-    ]
-
-    inline_markup = InlineKeyboardMarkup()
-    for so in range(6):
-        inline_markup.add(InlineKeyboardButton(text= org_name[so], url= org_url[so]))
-
-    return inline_markup
-
-
-#-------------------------------------------------------------------
-def send_stud_forms_BTN():
-
-    forms_name = [
-        "فرم درخواست بررسی مشکلات امتحانی دانشجویان",
-        "فرم تسویه حساب",
-        "فرم درخواست مهمانی و انتقال",
-        "گواهی اشتغال به تحصیل",
-        "گزارش ارزیابی کارآموزی",
-        "فرم درخواست مهمان در ترم تابستانی",
-        "فرم درخواست معادل سازی دروس",
-        "فرم درخواست مرخصی تحصیلی دانشجویان",
-        "فرم درخواست تغییر رشته داخل دانشگاه",
-        "فرم درخواست استاد راهنمای پروژه تخصصی",
-        "فرم حذف تک درس",
-        "فرم حذف اضطراری",
-        "فرم تقاضای امتحان معرفی به استاد",
-        "فرم پیشنهاد پروژه تخصصی کارشناسی",
-        "درخواست کارآموزی",
-        "فرم ارزیابی کارآموزی",
-        "فرم معرفی به کارآموزی"
-    ]
-
-    forms_urls = [
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1593425151-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1625644738-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1591086925-.doc",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1592291479-99-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572256100-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1594713480-1572255861-.doc",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572255748-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572255677-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572255512-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1594713433-1572255428-2-.doc",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572254473-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572254337-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572254259-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1572254200-.doc",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1591763964-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1594184770-.docx",
-        "https://miyanehtech.tabrizu.ac.ir/file/download/page/1593935756-.docx"
-    ]
-
-    inline_markup = InlineKeyboardMarkup()
-    for sf in range(17):
-        inline_markup.add(InlineKeyboardButton(text= forms_name[sf], url= forms_urls[sf]))
-
-    return inline_markup
-
-
-#-------------------------------------------------------------------
-def send_educat_files_BTN():
-
-    doc_name = [
-        "برنامه کلاسی و امتحانی ۱۴۰۴ - ۱۴۰۳",
-        "چارت درسی مهندسی مکانیک",
-        "چارت درسی مهندسی کامپیوتر",
-        "چارت درسی مهندسی صنایع",
-        "لیست کد دروس مهندسی مکانیک",
-        "لیست کد دروس مهندسی کامپیوتر",
-        "لیست کد دروس مهندسی صنایع",
-        "رهنمای جامع انتخاب واحد",
-        "آیین نامه شرکت در امتحانات"
-    ]
-
-    doc_callback = [
-        "Class_and_Exam_schedule",
-        "M_E_chart",
-        "C_E_chart",
-        "I_E_chart",
-        "M_E_code_list",
-        "C_E_code_list",
-        "I_E_code_list",
-        "Unit_selection_guide",
-        "Exam_regulation"
-    ]
-
-    inline_markup = InlineKeyboardMarkup()
-    for ef in range(9):
-        inline_markup.add(InlineKeyboardButton(text = doc_name[ef], callback_data = doc_callback[ef]))
-
-    return inline_markup
-
-
-#-------------------------------------------------------------------
-def send_support_id_BTN():
-
-    support_list = [
-        "ارسال پیشنهادات",
-        "گزارش باگ",
-    ]
-
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    for si in range(3):
-        markup.add(KeyboardButton(support_list[si]))
-
-    return markup, support_list
-    
-
-def get_support_id_BTN(request, support_list):
-
-    supports_name = [
-        'ارتباط با ادمین',
-        'ارتباط با توسعه دهنده'
-    ]
-    supports_id = [
-        'https://t.me/ZNR_KD',
-        'https://t.me/ZNR_KD'
-    ]
-    
-    inline_markup = InlineKeyboardMarkup(row_width=2)
-    if request == support_list[0]:
-        inline_markup.add(InlineKeyboardButton(text= supports_name[0], url= supports_id[0]))
-    elif request == support_list[1]:
-        inline_markup.add(InlineKeyboardButton(text= supports_name[1], url= supports_id[1]))
-
-    return inline_markup
-
-
-#*******************************************************************************
-def K_docs6_BTN():
-
-    doc6_name = [
-        "اصول علم ربات",
-        "مبانی هوش محاسباتی",
-        "شبکه های کامپیوتری",
-        "آز شبکه های کامپیوتری",
-        "اقتصاد مهندسی",
-        "اندیشه 2"
-    ]
-
-    doc6_callback = ["Class_and_Exam_schedule"]
-
-
-    inline_markup = InlineKeyboardMarkup(row_width=1)
-    for kd in range(6):
-        inline_markup.add(InlineKeyboardButton(text = doc6_name[kd], callback_data = doc6_callback[0]))
-
-    return inline_markup
-
-
-#*******************************************************************************
-# handlers:
-
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-    welcome_txt = """🌟  سلام!👋🏻 \n🌟 به ربات ما خوش اومدی ، 😊\n\n 🌟  در چه زمینه ای کمک میخای ؟👇🏻"""
+@bot.message_handler(commands=['start'])
+def def_welcome(message):
+    welcome_text = """
+🌟  سلام!👋🏻 
+🌟 به ربات ما خوش اومدی ، 😊
+\n🌟  این یک نسخه آزمایشی از ربات است و تیم توسعه همچنان در حال آزمایش و تکمیل ربات هستند، از این رو اگر با اشکالی در عملکرد ربات مواجه شدید یا پیشنهادی در راستای توسعه ربات دارید حتما با ما در میان بگذارید.
+\n🌟  از طریق این ربات میتوانید به فایل ها و منابع مورد نیاز تون سریع تر دسترسی داشته باشید.
+\n\n🌟  در چه زمینه ای می تونم کمک تون کنم ؟ 👇🏻 """
 
     markup, section_list = send_welcome_BTN()
-    bot.send_message(message.chat.id, welcome_txt, reply_markup = markup)
+
+    bot.send_message(message.chat.id, welcome_text, reply_markup = markup)
     bot.register_next_step_handler(message, get_section, section_list)
 
 
 #-------------------------------------------------------------------
-@bot.message_handler(func=lambda message: True)
-def Reback(message):
+@bot.message_handler(commands=['help'])
+def def_help(message):
+    
+    help_text = """
+🤖 این ربات توسط تیم برنامه نویسی انجمن علمی کامپیوتر طراحی شده،
+\n⭕️ هدف این ربات تسریع دسترسی دانشجو به بخش ها و سامانه های موجود دانشکده و جمع آوری منابع و اسناد آموزشی و بصورت یکجا جهت تسهیل فعالیت‌های دانشجویان گرامی است،
+\n⭕️ لذا قابلیت های ربات شامل بخش های زیر است:
+<b>1. کلاس های درسی:</b> دسترسی به لیست کلاس های دانشکده یا ترم مربوطه
+<b>2. جزوه های درسی:</b> دسترسی به جزوه های درسی اساتید هر درس یا سایر فایل های درسی مربوطه
+<b>3. سامانه های دانشجویی:</b> دسترسی به سامانه های موجود دانشکده
+<b>4. تشکل های دانشجویی:</b> دسترسی به تشکل های موجود دانشکده
+<b>5. فرم های دانشجویی:</b> دسترسی به فرم های دانشجویی مورد نظر
+<b>6. فایل های آموزشی:</b> دسترسی به فایل های ارائه شده توسط واحد آموزش
+<b>7. ارتباط با اساتید:</b> دسترسی به راه های ارتباطی اساتید جهت تسریع ارتباط دانشجو با استاد مربوطه
+<b>8. تماس با واحد های دانشکده:</b> دسترسی به شماره تماس واحد های دانشکده و کارکنان محترم
+<b>9. ارتباط با پشتیبانی:</b> ارتباط با تیم پشتیبانی جهت بروزرسانی منابع و فایل ها یا گزارش اشکال و ارسال پیشنهاد به تیم پشتیبانی جهت توسعه و بهبود بیشتر عملکرد ربات.
+\n
+📑 <b>ارسال فایل ها و منابع آموزشی:</b>
+🆔 @Alireza_ktbi
 
-    if message.text == menu_back_BTN_TEXT:
-        logger.info("triggred back: OK ...")
-        send_welcome(message)
+⚠️ <b>گزارش اشکال یا ارسال پیشنهاد:</b>
+🆔 @ZNR_KD """
 
-    # if message.text == return_back_BTN_TEXT:
-    #     logger.info("triggred back: OK ...")
-    #     send_Semester(message, Field_index, section_index)
+    bot.reply_to(message, help_text, parse_mode='HTML')
+
+#-------------------------------------------------------------------
+@bot.message_handler(commands=['menu'])
+def def_menu(message):
+    send_menu(message)
+    bot.register_next_step_handler(message, send_menu)
+
+
+#-------------------------------------------------------------------
+@bot.message_handler(commands=['support'])
+def def_menu(message):
+    Support_id(message)
+
 
 #-------------------------------------------------------------------
 @bot.message_handler(content_types=["document"])
 def Check_id(message):
 
+    bot.send_message(message.chat.id, "فایل دریافت شد. 😊")
     logger.info("triggred get: OK ...")
     logger.info(message.__dict__)
+
 
 #-------------------------------------------------------------------
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
 
-    # Menu Back Callback:
-    # if call.data == "return_menu":
-    #     logger.info("triggred menu_back: OK ...")
-    #     send_welcome(call.message)
-
     # Educational Files Callback:
     if call.data == "Class_and_Exam_schedule":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
-
-    if call.data == "Unit_selection_guide":
-        bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINJ2gKBFGbbR92aMxWDE5YqWNX6IGHAALCFgACYZERUZW3GkWFUXoAATYE")
 
     if call.data == "M_E_chart":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINKWgKBXGYot496qew5Wfu898JLI3qAAI7FwACHwMYUBXNFhwCevERNgQ")
 
     if call.data == "C_E_chart":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINHWgKA6bgnkyuwqYhHlmWxx0uAZuGAAJIEgACY_0ZUoUNa1nmu5B3NgQ")
 
     if call.data == "I_E_chart":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINL2gKBlp0nJLjO7vu006vUnPUYkXFAAIvDgACA9x5UwpYPZ9YWtz1NgQ")
 
     if call.data == "M_E_code_list":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINL2gKBlp0nJLjO7vu006vUnPUYkXFAAIvDgACA9x5UwpYPZ9YWtz1NgQ")
 
     if call.data == "C_E_code_list":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINL2gKBlp0nJLjO7vu006vUnPUYkXFAAIvDgACA9x5UwpYPZ9YWtz1NgQ")
 
     if call.data == "I_E_code_list":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINL2gKBlp0nJLjO7vu006vUnPUYkXFAAIvDgACA9x5UwpYPZ9YWtz1NgQ")
+
+    if call.data == "Unit_selection_guide":
+        bot.send_chat_action(call.message.chat.id, action= "upload_document")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINK2gKBd9XRLZan8_AsztN0YChRDwBAAINFAACHDeAUMRACisduv_gNgQ")
 
     if call.data == "Exam_regulation":
         bot.send_chat_action(call.message.chat.id, action= "upload_document")
-        bot.send_document(call.message.chat.id, "BQACAgQAAxkBAAII7WgD3VQw65pQ6vKp-ENcfcVEo7SlAALCFgACYZERUZW3GkWFUXoAATYE")
+        bot.send_document(call.message.chat.id,
+        "BQACAgQAAxkBAAINLWgKBhYcJj80qBm9MsZVd6aosK8KAAK1IAAC3YMgUFFGPekzDbUONgQ")
 
 
 #-------------------------------------------------------------------
 bot.polling() 
-
-# bot.infinity_polling()
-
-# inline_markup.add(InlineKeyboardButton(text= org_name[6], callback_data="return_menu"))
-
-# remove_markup = ReplyKeyboardRemove()
-# mess = bot.send_message(message.chat.id, """...""", reply_markup = remove_markup)
-# sleep(0.5)
-# bot.delete_message(message.chat.id, mess.message_id)
